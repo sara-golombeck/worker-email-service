@@ -7,7 +7,7 @@ pipeline {
         AWS_ACCOUNT_ID = credentials('aws-account-id')
         AWS_REGION = credentials('aws_region')
         ECR_REPO_WORKER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-worker"
-        GITOPS_REPO = 'git@github.com:sara-golombeck/gitops-automarkly.git'
+        GITOPS_REPO = 'git@github.com:sara-golombeck/gitops-email-service.git'
         HELM_VALUES_PATH = 'charts/email-service/values.yaml'
     }
     
