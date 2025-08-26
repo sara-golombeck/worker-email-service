@@ -123,7 +123,7 @@ pipeline {
                                     git config user.email "${GIT_EMAIL}"
                                     git config user.name "${GIT_USERNAME}"
 
-                                    sed -i '/^worker:/,/^[^ ]/ s/tag: ".*"/tag: "'${WORKER_TAG}'"/' "${HELM_VALUES_PATH}"
+                                    sed -i '/^  images:/,/^[^ ]/ s/worker: ".*"/worker: "'${WORKER_TAG}'"/' "${HELM_VALUES_PATH}"
                                     
                                     if git diff --quiet "${HELM_VALUES_PATH}"; then
                                         echo "No changes to deploy - version ${WORKER_TAG} already deployed"
