@@ -43,7 +43,11 @@ namespace EmailWorker.Services
                         WaitTimeSeconds = 20 // Long polling
                     };
 
+                    using var pollingTimer = WorkerMetrics.SqsPollingDuration.NewTimer();
                     var response = await _sqsClient.ReceiveMessageAsync(request, stoppingToken);
+                    
+                    WorkerMetrics.QueueSize.Set(response.Messages.Count);
+                    WorkerMetrics.SqsMessages.WithLabels("receive", "success").Inc(response.Messages.Count);
 
                     if (response.Messages.Count > 0)
                     {
@@ -66,8 +70,11 @@ namespace EmailWorker.Services
                 }
                 catch (Exception ex)
                 {
+                    WorkerMetrics.SqsMessages.WithLabels("receive", "error").Inc();
+                    WorkerMetrics.WorkerHealth.Set(0);
                     _logger.LogError(ex, "Error in Email Worker Service main loop");
                     await Task.Delay(5000, stoppingToken); // Wait before retrying
+                    WorkerMetrics.WorkerHealth.Set(1);
                 }
             }
 
@@ -76,6 +83,8 @@ namespace EmailWorker.Services
 
         private async Task ProcessMessageAsync(Message message, CancellationToken cancellationToken)
         {
+            using var processingTimer = WorkerMetrics.EmailProcessingDuration.NewTimer();
+            
             try
             {
                 // פרסר את ההודעה
@@ -83,6 +92,7 @@ namespace EmailWorker.Services
                 
                 if (emailMessage == null || string.IsNullOrEmpty(emailMessage.Email))
                 {
+                    WorkerMetrics.EmailsProcessed.WithLabels("invalid").Inc();
                     _logger.LogWarning("Invalid message format: {MessageBody}", message.Body);
                     await DeleteMessageAsync(message);
                     return;
@@ -95,6 +105,8 @@ namespace EmailWorker.Services
 
                 if (result.Success)
                 {
+                    WorkerMetrics.EmailsProcessed.WithLabels("success").Inc();
+                    WorkerMetrics.SesOperations.WithLabels("success").Inc();
                     _logger.LogInformation("Email sent successfully to: {Email}, MessageId: {MessageId}", 
                         emailMessage.Email, result.MessageId);
                     
@@ -103,6 +115,8 @@ namespace EmailWorker.Services
                 }
                 else
                 {
+                    WorkerMetrics.EmailsProcessed.WithLabels("failed").Inc();
+                    WorkerMetrics.SesOperations.WithLabels("failed").Inc();
                     _logger.LogError("Failed to send email to: {Email}, Error: {Error}", 
                         emailMessage.Email, result.ErrorMessage);
                     
@@ -113,6 +127,7 @@ namespace EmailWorker.Services
             }
             catch (Exception ex)
             {
+                WorkerMetrics.EmailsProcessed.WithLabels("error").Inc();
                 _logger.LogError(ex, "Error processing message: {MessageId}", message.MessageId);
                 // לא מוחקים את ההודעה - תחזור לQueue לretry
             }
@@ -123,10 +138,12 @@ namespace EmailWorker.Services
             try
             {
                 await _sqsClient.DeleteMessageAsync(_queueUrl, message.ReceiptHandle);
+                WorkerMetrics.SqsMessages.WithLabels("delete", "success").Inc();
                 _logger.LogDebug("Message deleted from queue: {MessageId}", message.MessageId);
             }
             catch (Exception ex)
             {
+                WorkerMetrics.SqsMessages.WithLabels("delete", "error").Inc();
                 _logger.LogError(ex, "Failed to delete message: {MessageId}", message.MessageId);
             }
         }

@@ -1,6 +1,7 @@
 using Amazon.SQS;
 using Amazon.SimpleEmail;
 using EmailWorker.Services;
+using Prometheus;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -22,5 +23,20 @@ builder.Services.AddLogging(logging =>
 
 var host = builder.Build();
 
-// Run the worker
-await host.RunAsync();
+// Start Prometheus metrics server
+var metricServer = new MetricServer(hostname: "*", port: 8080);
+metricServer.Start();
+
+// Set initial health status
+WorkerMetrics.WorkerHealth.Set(1);
+
+try
+{
+    // Run the worker
+    await host.RunAsync();
+}
+finally
+{
+    WorkerMetrics.WorkerHealth.Set(0);
+    metricServer.Stop();
+}
