@@ -34,6 +34,9 @@ namespace EmailWorker.Services
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                var pollingStopwatch = Stopwatch.StartNew();
+                bool shouldMeasurePolling = true;
+
                 try
                 {
                     // קרא הודעות מהQueue
@@ -44,9 +47,7 @@ namespace EmailWorker.Services
                         WaitTimeSeconds = 20 // Long polling
                     };
 
-                    var pollingStopwatch = Stopwatch.StartNew();
                     var response = await _sqsClient.ReceiveMessageAsync(request, stoppingToken);
-                    WorkerMetrics.SqsPollingDuration.Observe(pollingStopwatch.Elapsed.TotalSeconds);
                     
                     WorkerMetrics.QueueSize.Set(response.Messages.Count);
                     WorkerMetrics.SqsMessages.WithLabels("receive", "success").Inc(response.Messages.Count);
@@ -67,6 +68,7 @@ namespace EmailWorker.Services
                 }
                 catch (OperationCanceledException)
                 {
+                    shouldMeasurePolling = false; // לא נמדוד cancellation
                     _logger.LogInformation("Email Worker Service is stopping...");
                     break;
                 }
@@ -78,6 +80,14 @@ namespace EmailWorker.Services
                     await Task.Delay(5000, stoppingToken); // Wait before retrying
                     WorkerMetrics.WorkerHealth.Set(1);
                 }
+                finally
+                {
+                    // מדיד רק אם זה לא cancellation
+                    if (shouldMeasurePolling)
+                    {
+                        WorkerMetrics.SqsPollingDuration.Observe(pollingStopwatch.Elapsed.TotalSeconds);
+                    }
+                }
             }
 
             _logger.LogInformation("Email Worker Service stopped");
@@ -85,11 +95,9 @@ namespace EmailWorker.Services
 
         private async Task ProcessMessageAsync(Message message, CancellationToken cancellationToken)
         {
-            var processingStopwatch = Stopwatch.StartNew();
-            
             try
             {
-                // פרסר את ההודעה
+                // פרסר את ההודעה - לא מדידים validation
                 var emailMessage = JsonSerializer.Deserialize<EmailMessage>(message.Body);
                 
                 if (emailMessage == null || string.IsNullOrEmpty(emailMessage.Email))
@@ -97,45 +105,64 @@ namespace EmailWorker.Services
                     WorkerMetrics.EmailsProcessed.WithLabels("invalid").Inc();
                     _logger.LogWarning("Invalid message format: {MessageBody}", message.Body);
                     await DeleteMessageAsync(message);
-                    return;
+                    return; // יוצא מוקדם - לא מודד processing time
                 }
 
-                _logger.LogInformation("Processing email for: {Email}", emailMessage.Email);
-
-                // שלח מייל
-                var result = await _emailService.SendLoginEmailAsync(emailMessage.Email);
-
-                if (result.Success)
+                // מתחיל למדוד רק כשמתחיל processing אמיתי
+                var processingStopwatch = Stopwatch.StartNew();
+                
+                try
                 {
-                    WorkerMetrics.EmailsProcessed.WithLabels("success").Inc();
-                    WorkerMetrics.SesOperations.WithLabels("success").Inc();
-                    _logger.LogInformation("Email sent successfully to: {Email}, MessageId: {MessageId}", 
-                        emailMessage.Email, result.MessageId);
-                    
-                    // מחק הודעה מהQueue
-                    await DeleteMessageAsync(message);
+                    _logger.LogInformation("Processing email for: {Email}", emailMessage.Email);
+
+                    // שלח מייל
+                    var result = await _emailService.SendLoginEmailAsync(emailMessage.Email);
+
+                    if (result.Success)
+                    {
+                        WorkerMetrics.EmailsProcessed.WithLabels("success").Inc();
+                        WorkerMetrics.SesOperations.WithLabels("success").Inc();
+                        _logger.LogInformation("Email sent successfully to: {Email}, MessageId: {MessageId}", 
+                            emailMessage.Email, result.MessageId);
+                        
+                        // מחק הודעה מהQueue
+                        await DeleteMessageAsync(message);
+                    }
+                    else
+                    {
+                        WorkerMetrics.EmailsProcessed.WithLabels("failed").Inc();
+                        WorkerMetrics.SesOperations.WithLabels("failed").Inc();
+                        _logger.LogError("Failed to send email to: {Email}, Error: {Error}", 
+                            emailMessage.Email, result.ErrorMessage);
+                        
+                        // כאן יכול להיות retry logic או dead letter queue
+                        // לעת עתה נמחק את ההודעה כדי לא ליצור infinite loop
+                        await DeleteMessageAsync(message);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    WorkerMetrics.EmailsProcessed.WithLabels("failed").Inc();
-                    WorkerMetrics.SesOperations.WithLabels("failed").Inc();
-                    _logger.LogError("Failed to send email to: {Email}, Error: {Error}", 
-                        emailMessage.Email, result.ErrorMessage);
-                    
-                    // כאן יכול להיות retry logic או dead letter queue
-                    // לעת עתה נמחק את ההודעה כדי לא ליצור infinite loop
-                    await DeleteMessageAsync(message);
+                    WorkerMetrics.EmailsProcessed.WithLabels("error").Inc();
+                    _logger.LogError(ex, "Error processing email for message: {MessageId}", message.MessageId);
+                    // לא מוחקים את ההודעה - תחזור לQueue לretry
+                    throw; // מעביר הלאה לfinally
                 }
+                finally
+                {
+                    // מדידה תמיד קורית עבור processing אמיתי
+                    WorkerMetrics.EmailProcessingDuration.Observe(processingStopwatch.Elapsed.TotalSeconds);
+                }
+            }
+            catch (JsonException jsonEx)
+            {
+                WorkerMetrics.EmailsProcessed.WithLabels("invalid").Inc();
+                _logger.LogError(jsonEx, "Invalid JSON format in message: {MessageId}", message.MessageId);
+                await DeleteMessageAsync(message); // מחק הודעות עם JSON שגוי
             }
             catch (Exception ex)
             {
-                WorkerMetrics.EmailsProcessed.WithLabels("error").Inc();
-                _logger.LogError(ex, "Error processing message: {MessageId}", message.MessageId);
-                // לא מוחקים את ההודעה - תחזור לQueue לretry
-            }
-            finally
-            {
-                WorkerMetrics.EmailProcessingDuration.Observe(processingStopwatch.Elapsed.TotalSeconds);
+                // כל שגיאה אחרת - כבר טופלה למעלה
+                _logger.LogError(ex, "Unexpected error processing message: {MessageId}", message.MessageId);
             }
         }
 
