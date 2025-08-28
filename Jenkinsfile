@@ -35,7 +35,7 @@ pipeline {
                 script {
                     echo "Creating version tag..."
                     
-                    sshagent(credentials: ['github-ssh-key']) {
+                    sshagent(['github-ssh-key']) {
                         sh "git fetch --tags"
                         
                         def newTag = "1.0.0"  // default
@@ -158,7 +158,7 @@ pipeline {
                     
                     echo "Pushing tag ${env.WORKER_TAG} to repository..."
                     
-                    sshagent(credentials: ['github-ssh-key']) {
+                    sshagent(['github-ssh-key']) {
                         withCredentials([
                             string(credentialsId: 'git-username', variable: 'GIT_USERNAME'),
                             string(credentialsId: 'git-email', variable: 'GIT_EMAIL')
@@ -173,7 +173,7 @@ pipeline {
                         }
                     }
                     
-                    echo "Tag ${env.WORKER_TAG} pushed successfully"
+                    echo "Tag ${WORKER_TAG} pushed successfully"
                 }
             }
         }
