@@ -4,9 +4,6 @@ pipeline {
     environment {
         APP_NAME = 'email-worker'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
-        AWS_ACCOUNT_ID = credentials('aws-account-id')
-        AWS_REGION = credentials('aws_region')
-        ECR_REPO_WORKER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-worker"
         GITOPS_REPO = 'git@github.com:sara-golombeck/gitops-email-service.git'
         HELM_VALUES_PATH = 'charts/email-service/values.yaml'
     }
@@ -38,7 +35,7 @@ pipeline {
                 script {
                     echo "Creating version tag..."
                     
-                    sshagent(credentials: ['github']) {
+                    sshagent(credentials: ['github-ssh-key']) {
                         sh "git fetch --tags"
                         
                         def newTag = "1.0.0"  // default
@@ -80,16 +77,23 @@ pipeline {
                     
                     echo "Pushing ${env.WORKER_TAG} to ECR..."
                     
-                    sh '''
-                        aws ecr get-login-password --region "${AWS_REGION}" | \
-                            docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                    withCredentials([
+                        string(credentialsId: 'aws-account-id', variable: 'AWS_ACCOUNT_ID'),
+                        string(credentialsId: 'aws-region', variable: 'AWS_REGION')
+                    ]) {
+                        def ECR_REPO_WORKER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-worker"
                         
-                        docker tag "${APP_NAME}:${BUILD_NUMBER}" "${ECR_REPO_WORKER}:${WORKER_TAG}"
-                        docker tag "${APP_NAME}:${BUILD_NUMBER}" "${ECR_REPO_WORKER}:latest"
-                        
-                        docker push "${ECR_REPO_WORKER}:${WORKER_TAG}"
-                        docker push "${ECR_REPO_WORKER}:latest"
-                    '''
+                        sh '''
+                            aws ecr get-login-password --region "${AWS_REGION}" | \
+                                docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                            
+                            docker tag "${APP_NAME}:${BUILD_NUMBER}" "''' + ECR_REPO_WORKER + ''':${WORKER_TAG}"
+                            docker tag "${APP_NAME}:${BUILD_NUMBER}" "''' + ECR_REPO_WORKER + ''':latest"
+                            
+                            docker push "''' + ECR_REPO_WORKER + ''':${WORKER_TAG}"
+                            docker push "''' + ECR_REPO_WORKER + ''':latest"
+                        '''
+                    }
                     
                     echo "Successfully pushed ${env.WORKER_TAG} to ECR"
                 }
@@ -107,7 +111,7 @@ pipeline {
                         return
                     }
                     
-                    sshagent(['github']) {
+                    sshagent(['github-ssh-key']) {
                         sh '''
                             rm -rf gitops-config
                             echo "Cloning GitOps repository..."
@@ -154,7 +158,7 @@ pipeline {
                     
                     echo "Pushing tag ${env.WORKER_TAG} to repository..."
                     
-                    sshagent(credentials: ['github']) {
+                    sshagent(credentials: ['github-ssh-key']) {
                         withCredentials([
                             string(credentialsId: 'git-username', variable: 'GIT_USERNAME'),
                             string(credentialsId: 'git-email', variable: 'GIT_EMAIL')
