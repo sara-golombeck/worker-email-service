@@ -44,7 +44,6 @@ stage('Create Version Tag') {
                 chmod +x gitversion
                 ./gitversion -showvariable SemVer > version.txt
             '''
-            
 
             env.WORKER_TAG = readFile('version.txt').trim()
             sh 'rm -f gitversion* version.txt'
