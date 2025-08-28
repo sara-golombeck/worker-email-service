@@ -3,11 +3,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy project file first for better caching
-COPY EmailWorker.csproj .
+COPY src/EmailWorker/EmailWorker.csproj .
 RUN dotnet restore "EmailWorker.csproj"
 
 # Copy source and build
-COPY . .
+COPY src/EmailWorker/ .
 RUN dotnet publish "EmailWorker.csproj" -c Release -o /app/publish --no-restore
 
 # Runtime stage  

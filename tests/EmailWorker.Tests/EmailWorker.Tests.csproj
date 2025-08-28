@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../EmailWorker.csproj" />
+    <ProjectReference Include="../../src/EmailWorker/EmailWorker.csproj" />
   </ItemGroup>
 
 </Project>
