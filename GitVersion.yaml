@@ -1,5 +1,5 @@
 mode: ContinuousDelivery
-major-version-bump-message: "^(feat|fix)(\\([^)]*\\))?!:|.*BREAKING CHANGE:"
-minor-version-bump-message: "^feat(\\([^)]*\\))?:"
-patch-version-bump-message: "^fix(\\([^)]*\\))?:"
+minor-version-bump-message: '^feat:'
+patch-version-bump-message: '^fix:'
+major-version-bump-message: 'BREAKING CHANGE:|^feat!:'
 commit-message-incrementing: Enabled
