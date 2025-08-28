@@ -40,7 +40,7 @@ stage('Create Version Tag') {
             
             sh '''
                 # הורדת GitVersion
-                curl -L https://github.com/GitTools/GitVersion/releases/download/5.12.0/gitversion-linux-x64-6.4.0.tar.gz -o gitversion.tar.gz
+                curl -L https://github.com/GitTools/GitVersion/releases/download/6.4.0/gitversion-linux-x64-6.4.0.tar.gz -o gitversion.tar.gz
                 tar -xzf gitversion.tar.gz
                 chmod +x gitversion
                 
