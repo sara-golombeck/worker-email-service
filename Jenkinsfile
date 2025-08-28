@@ -36,19 +36,21 @@ stage('Create Version Tag') {
     }
     steps {
         script {
-            echo "Calculating version with GitVersion..."
+            echo "Downloading and running GitVersion..."
             
-            def versionOutput = sh(
-                script: '''
-                    docker run --rm \
-                    -v "/var/lib/docker/volumes/jenkins_jenkins_home/_data/workspace/worker-email-service_main:/repo" \
-                    gittools/gitversion:6.4.0-alpine.3.21-8.0 \
-                    /repo /showvariable SemVer
-                ''',
-                returnStdout: true
-            ).trim()
+            sh '''
+                # הורדת GitVersion
+                curl -L https://github.com/GitTools/GitVersion/releases/download/5.12.0/gitversion-linux-x64-5.12.0.tar.gz -o gitversion.tar.gz
+                tar -xzf gitversion.tar.gz
+                chmod +x gitversion
+                
+                # הרצה
+                ./gitversion -showvariable SemVer > version.txt
+            '''
             
-            env.WORKER_TAG = versionOutput
+            env.WORKER_TAG = readFile('version.txt').trim()
+            sh 'rm -f gitversion* version.txt'
+            
             echo "Version calculated: ${env.WORKER_TAG}"
         }
     }
