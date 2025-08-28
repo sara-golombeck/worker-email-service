@@ -1,0 +1,5 @@
+mode: ContinuousDelivery
+branches:
+  main:
+    mode: ContinuousDelivery
+    tag: ''

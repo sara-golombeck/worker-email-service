@@ -26,44 +26,67 @@ pipeline {
                 }
             }
         }
-        
         stage('Create Version Tag') {
-            when { 
-                branch 'main' 
-            }
-            steps {
-                script {
-                    echo "Creating version tag..."
-                    
-                    sshagent(['github-ssh-key']) {
-                        sh "git fetch --tags"
-                        
-                        def newTag = "1.0.0"  // default
-                        
-                        try {
-                            def lastTag = sh(script: "git tag --sort=-version:refname | head -1", returnStdout: true).trim()
-                            if (lastTag && lastTag != '') {
-                                echo "Found existing tag: ${lastTag}"
-                                
-                                def v = lastTag.tokenize('.')
-                                if (v.size() >= 3) {
-                                    def newPatch = v[2].toInteger() + 1
-                                    newTag = v[0] + "." + v[1] + "." + newPatch
-                                }
-                            } else {
-                                echo "No existing tags found, starting from 1.0.0"
-                            }
-                        } catch (Exception e) {
-                            echo "Error reading tags: ${e.getMessage()}, starting from 1.0.0"
-                        }
-                        
-                        echo "Generated new tag: ${newTag}"
-                        env.WORKER_TAG = newTag
-                        echo "Version tag ${env.WORKER_TAG} prepared successfully"
-                    }
-                }
-            }
+    when { 
+        branch 'main' 
+    }
+    steps {
+        script {
+            echo "Calculating version with GitVersion..."
+            
+            def versionOutput = sh(
+                script: '''
+                    docker run --rm \
+                    -v "$(pwd):/repo" \
+                    gittools/gitversion:6.0.2-alpine \
+                    /repo /showvariable SemVer
+                ''',
+                returnStdout: true
+            ).trim()
+            
+            env.WORKER_TAG = versionOutput
+            echo "Version calculated: ${env.WORKER_TAG}"
         }
+    }
+}
+        
+        // stage('Create Version Tag') {
+        //     when { 
+        //         branch 'main' 
+        //     }
+        //     steps {
+        //         script {
+        //             echo "Creating version tag..."
+                    
+        //             sshagent(['github-ssh-key']) {
+        //                 sh "git fetch --tags"
+                        
+        //                 def newTag = "1.0.0"  // default
+                        
+        //                 try {
+        //                     def lastTag = sh(script: "git tag --sort=-version:refname | head -1", returnStdout: true).trim()
+        //                     if (lastTag && lastTag != '') {
+        //                         echo "Found existing tag: ${lastTag}"
+                                
+        //                         def v = lastTag.tokenize('.')
+        //                         if (v.size() >= 3) {
+        //                             def newPatch = v[2].toInteger() + 1
+        //                             newTag = v[0] + "." + v[1] + "." + newPatch
+        //                         }
+        //                     } else {
+        //                         echo "No existing tags found, starting from 1.0.0"
+        //                     }
+        //                 } catch (Exception e) {
+        //                     echo "Error reading tags: ${e.getMessage()}, starting from 1.0.0"
+        //                 }
+                        
+        //                 echo "Generated new tag: ${newTag}"
+        //                 env.WORKER_TAG = newTag
+        //                 echo "Version tag ${env.WORKER_TAG} prepared successfully"
+        //             }
+        //         }
+        //     }
+        // }
         
         stage('Push to ECR') {
             when { 
