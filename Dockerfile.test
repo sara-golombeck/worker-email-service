@@ -18,8 +18,4 @@ COPY . .
 RUN mkdir -p /app/test-results
 
 # Default command runs unit tests
-CMD ["dotnet", "test", "tests/EmailWorker.Tests", \
-     "--logger", "trx", \
-     "--results-directory", "/app/test-results", \
-     "--collect:XPlat Code Coverage", \
-     "--no-restore"]
+CMD ["sh", "-c", "dotnet clean && dotnet test tests/EmailWorker.Tests --logger trx --results-directory /app/test-results --collect:'XPlat Code Coverage'"]
