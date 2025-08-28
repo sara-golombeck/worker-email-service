@@ -3,6 +3,7 @@ using Amazon.SQS.Model;
 using EmailWorker.Models;
 using EmailWorker.Services;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace EmailWorker.Services
 {
@@ -43,8 +44,9 @@ namespace EmailWorker.Services
                         WaitTimeSeconds = 20 // Long polling
                     };
 
-                    using var pollingTimer = WorkerMetrics.SqsPollingDuration.NewTimer();
+                    var pollingStopwatch = Stopwatch.StartNew();
                     var response = await _sqsClient.ReceiveMessageAsync(request, stoppingToken);
+                    WorkerMetrics.SqsPollingDuration.Observe(pollingStopwatch.Elapsed.TotalSeconds);
                     
                     WorkerMetrics.QueueSize.Set(response.Messages.Count);
                     WorkerMetrics.SqsMessages.WithLabels("receive", "success").Inc(response.Messages.Count);
@@ -83,7 +85,7 @@ namespace EmailWorker.Services
 
         private async Task ProcessMessageAsync(Message message, CancellationToken cancellationToken)
         {
-            using var processingTimer = WorkerMetrics.EmailProcessingDuration.NewTimer();
+            var processingStopwatch = Stopwatch.StartNew();
             
             try
             {
@@ -131,7 +133,10 @@ namespace EmailWorker.Services
                 _logger.LogError(ex, "Error processing message: {MessageId}", message.MessageId);
                 // לא מוחקים את ההודעה - תחזור לQueue לretry
             }
-
+            finally
+            {
+                WorkerMetrics.EmailProcessingDuration.Observe(processingStopwatch.Elapsed.TotalSeconds);
+            }
         }
 
         private async Task DeleteMessageAsync(Message message)
