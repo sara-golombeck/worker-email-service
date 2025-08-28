@@ -1,9 +1,31 @@
+# Build results
 bin/
 obj/
+
+# User-specific files
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+
+# IDE
 .vs/
 .vscode/
+.idea/
+
+# Logs
 *.log
+
+# Test results
 TestResults/
 test-results/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml

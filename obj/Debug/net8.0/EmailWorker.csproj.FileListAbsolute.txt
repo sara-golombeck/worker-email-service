@@ -1,6 +1,0 @@
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.csproj.AssemblyReference.cache
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.GeneratedMSBuildEditorConfig.editorconfig
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.AssemblyInfoInputs.cache
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.AssemblyInfo.cs
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.csproj.CoreCompileInputs.cache
-/home/sara/Documents/works/automarkly/application/email-worker/obj/Debug/net8.0/EmailWorker.sourcelink.json
