@@ -131,6 +131,7 @@ namespace EmailWorker.Services
                 _logger.LogError(ex, "Error processing message: {MessageId}", message.MessageId);
                 // לא מוחקים את ההודעה - תחזור לQueue לretry
             }
+
         }
 
         private async Task DeleteMessageAsync(Message message)
