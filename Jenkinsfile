@@ -41,7 +41,7 @@ stage('Create Version Tag') {
             def versionOutput = sh(
                 script: '''
                     docker run --rm \
-                    -v "${WORKSPACE}:/repo" \
+                    -v "/var/lib/docker/volumes/jenkins_jenkins_home/_data/workspace/worker-email-service_main:/repo" \
                     gittools/gitversion:6.4.0-alpine.3.21-8.0 \
                     /repo /showvariable SemVer
                 ''',
