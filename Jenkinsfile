@@ -39,7 +39,6 @@ stage('Create Version Tag') {
             echo "Downloading and running GitVersion..."
             
             sh '''
-                # הורדת GitVersion
                 curl -L https://github.com/GitTools/GitVersion/releases/download/6.4.0/gitversion-linux-x64-6.4.0.tar.gz -o gitversion.tar.gz
                 tar -xzf gitversion.tar.gz
                 chmod +x gitversion
