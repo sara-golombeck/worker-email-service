@@ -16,6 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                sh "git fetch --tags"
             }
         }
         
@@ -38,7 +39,7 @@ pipeline {
                 script: '''
                     docker run --rm \
                     -v "$(pwd):/repo" \
-                    gittools/gitversion:6.0.2-alpine \
+                    gittools/gitversion:6.4.0-alpine.3.21-8.0 \
                     /repo /showvariable SemVer
                 ''',
                 returnStdout: true
