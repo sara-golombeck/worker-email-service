@@ -28,27 +28,31 @@ stage('Checkout') {
                 }
             }
         }
-
-
-        stage('Create Version Tag') {
+        
+        
+stage('Create Version Tag') {
+    when { 
+        branch 'main' 
+    }
     steps {
         script {
-            sshagent(['github-ssh-key']) {
-                sh "git fetch --tags"
-
-                def versionOutput = sh(
-                    script: '''
-                        docker run --rm \
-                        -v "$(pwd):/repo" \
-                        gittools/gitversion:6.4.0-alpine.3.21-8.0 \
-                        /repo /showvariable SemVer
-                    ''',
-                    returnStdout: true
-                ).trim()
+            echo "Downloading and running GitVersion..."
             
-                env.WORKER_TAG = versionOutput
-                echo "Version calculated: ${env.WORKER_TAG}"
-            }
+            sh '''
+                # הורדת GitVersion binary
+                wget -q https://github.com/GitTools/GitVersion/releases/download/5.12.0/gitversion-linux-x64-5.12.0.tar.gz
+                tar -xzf gitversion-linux-x64-5.12.0.tar.gz
+                chmod +x gitversion
+                
+                # הרצה עם output לקובץ
+                ./gitversion /output json > version.json
+            '''
+            
+            def versionInfo = readJSON file: 'version.json'
+            env.WORKER_TAG = versionInfo.SemVer
+            
+            sh 'rm -f gitversion* version.json'
+            echo "Version calculated: ${env.WORKER_TAG}"
         }
     }
 }
