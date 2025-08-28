@@ -31,28 +31,23 @@ stage('Checkout') {
 
 
         stage('Create Version Tag') {
-    when { 
-        branch 'main' 
-    }
     steps {
         script {
-            sshagent(['github']) {
+            sshagent(['github-ssh-key']) {
                 sh "git fetch --tags"
-                
-                sh '''
-                    echo "Current directory:"
-                    pwd
-                    echo "Files in current directory:"
-                    ls -la
-                    echo "Checking for .git:"
-                    ls -la .git/ || echo "No .git found"
-                    
-                    echo "Testing Docker mount:"
-                    docker run --rm -v "$(pwd):/repo" alpine:latest ls -la /repo
-                    
-                    echo "Testing GitVersion:"
-                    docker run --rm -v "$(pwd):/repo" gittools/gitversion:6.4.0-alpine.3.21-8.0 /repo /showvariable SemVer
-                '''
+
+                def versionOutput = sh(
+                    script: '''
+                        docker run --rm \
+                        -v "$(pwd):/repo" \
+                        gittools/gitversion:6.4.0-alpine.3.21-8.0 \
+                        /repo /showvariable SemVer
+                    ''',
+                    returnStdout: true
+                ).trim()
+            
+                env.WORKER_TAG = versionOutput
+                echo "Version calculated: ${env.WORKER_TAG}"
             }
         }
     }
