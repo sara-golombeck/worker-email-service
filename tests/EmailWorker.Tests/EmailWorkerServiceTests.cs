@@ -74,7 +74,7 @@ public class EmailWorkerServiceTests
 
         _sqsClientMock
             .Setup(x => x.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, default))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new DeleteMessageResponse());
 
         // Act
         var method = typeof(EmailWorkerService).GetMethod("ProcessMessageAsync", 
@@ -113,7 +113,7 @@ public class EmailWorkerServiceTests
 
         _sqsClientMock
             .Setup(x => x.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, default))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new DeleteMessageResponse());
 
         // Act
         var method = typeof(EmailWorkerService).GetMethod("ProcessMessageAsync", 
@@ -139,7 +139,7 @@ public class EmailWorkerServiceTests
 
         _sqsClientMock
             .Setup(x => x.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, default))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new DeleteMessageResponse());
 
         // Act
         var method = typeof(EmailWorkerService).GetMethod("ProcessMessageAsync", 
@@ -172,7 +172,7 @@ public class EmailWorkerServiceTests
 
         _sqsClientMock
             .Setup(x => x.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, default))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new DeleteMessageResponse());
 
         // Act
         var method = typeof(EmailWorkerService).GetMethod("ProcessMessageAsync", 
@@ -230,7 +230,7 @@ public class EmailWorkerServiceTests
 
         _sqsClientMock
             .Setup(x => x.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, default))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(new DeleteMessageResponse());
 
         // Act
         var method = typeof(EmailWorkerService).GetMethod("DeleteMessageAsync", 
