@@ -19,3 +19,4 @@ branches:
     regex: ^(main|master)$
     source-branches: ['develop', 'release', 'feature', 'support', 'hotfix']
     is-main-branch: true
+    
