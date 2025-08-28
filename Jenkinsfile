@@ -16,7 +16,7 @@ pipeline {
 stage('Checkout') {
     steps {
         checkout scm
-        sshagent(['github-ssh-key']) {
+        sshagent(['github']) {
             sh "git fetch --tags --unshallow || git fetch --tags"
         }
     }
@@ -60,7 +60,7 @@ stage('Checkout') {
         //         script {
         //             echo "Creating version tag..."
                     
-        //             sshagent(['github-ssh-key']) {
+        //             sshagent(['github']) {
         //                 sh "git fetch --tags"
                         
         //                 def newTag = "1.0.0"  // default
@@ -136,7 +136,7 @@ stage('Checkout') {
                         return
                     }
                     
-                    sshagent(['github-ssh-key']) {
+                    sshagent(['github']) {
                         sh '''
                             rm -rf gitops-config
                             echo "Cloning GitOps repository..."
@@ -183,7 +183,7 @@ stage('Checkout') {
                     
                     echo "Pushing tag ${env.WORKER_TAG} to repository..."
                     
-                    sshagent(['github-ssh-key']) {
+                    sshagent(['github']) {
                         withCredentials([
                             string(credentialsId: 'git-username', variable: 'GIT_USERNAME'),
                             string(credentialsId: 'git-email', variable: 'GIT_EMAIL')
