@@ -131,7 +131,7 @@ stage('Create Version Tag') {
                     
                     withCredentials([
                         string(credentialsId: 'aws-account-id', variable: 'AWS_ACCOUNT_ID'),
-                        string(credentialsId: 'aws-region', variable: 'AWS_REGION')
+                        string(credentialsId: 'aws_region', variable: 'AWS_REGION')
                     ]) {
                         def ECR_REPO_WORKER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/automarkly/emailservice-worker"
                         
