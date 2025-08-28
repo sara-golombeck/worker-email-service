@@ -1,22 +1,5 @@
 mode: ContinuousDelivery
 commit-message-incrementing: Enabled
-increment: Patch
-assembly-versioning-scheme: MajorMinorPatch
-semantic-version-format: Strict
-update-build-number: true
-
-major-version-bump-message: '^(feat|fix|perf|refactor|revert|style|test|build|ci|docs|chore)(\(.+\))?!:|BREAKING CHANGE:'
-minor-version-bump-message: '^feat(\(.+\))?:'
-patch-version-bump-message: '^(fix|perf)(\(.+\))?:'
-no-bump-message: '^(docs|style|refactor|test|build|ci|chore)(\(.+\))?:'
-
-branches:
-  main:
-    increment: Patch
-    prevent-increment-of-merged-branch-version: false
-    track-merge-target: false
-    track-merge-message: true
-    regex: ^(main|master)$
-    source-branches: ['develop', 'release', 'feature', 'support', 'hotfix']
-    is-main-branch: true
-    
+major-version-bump-message: 'BREAKING CHANGE:|^feat!:'
+minor-version-bump-message: '^feat:'
+patch-version-bump-message: '^fix:'
