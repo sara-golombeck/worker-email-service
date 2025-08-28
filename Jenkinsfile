@@ -13,13 +13,14 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-                sh "git fetch --tags"
-            }
+stage('Checkout') {
+    steps {
+        checkout scm
+        sshagent(['github-ssh-key']) {
+            sh "git fetch --tags --unshallow || git fetch --tags"
         }
-        
+    }
+}        
         stage('Build') {
             steps {
                 script {
