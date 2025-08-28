@@ -1,0 +1,24 @@
+# Test stage - רק לטסטים!
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS test
+
+WORKDIR /src
+
+# Copy project files first for better caching
+COPY *.csproj .
+COPY tests/EmailWorker.Tests/*.csproj tests/EmailWorker.Tests/
+
+# Restore packages
+RUN dotnet restore tests/EmailWorker.Tests
+
+# Copy all source code
+COPY . .
+
+# Create test results directory
+RUN mkdir -p /app/test-results
+
+# Default command runs unit tests
+CMD ["dotnet", "test", "tests/EmailWorker.Tests", \
+     "--logger", "trx", \
+     "--results-directory", "/app/test-results", \
+     "--collect:XPlat Code Coverage", \
+     "--no-restore"]

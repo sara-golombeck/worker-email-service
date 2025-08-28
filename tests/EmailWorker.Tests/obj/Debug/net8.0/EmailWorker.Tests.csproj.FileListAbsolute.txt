@@ -1,0 +1,7 @@
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/bin/Debug/net8.0/CoverletSourceRootsMapping_EmailWorker.Tests
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.csproj.AssemblyReference.cache
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.GeneratedMSBuildEditorConfig.editorconfig
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.AssemblyInfoInputs.cache
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.AssemblyInfo.cs
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.csproj.CoreCompileInputs.cache
+/home/sara/Documents/works/automarkly/application/email-worker/tests/EmailWorker.Tests/obj/Debug/net8.0/EmailWorker.Tests.sourcelink.json
