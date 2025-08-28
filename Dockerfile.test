@@ -3,12 +3,13 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS test
 
 WORKDIR /src
 
-# Copy project files first for better caching
+# Copy solution and project files first for better caching
+COPY *.sln .
 COPY *.csproj .
 COPY tests/EmailWorker.Tests/*.csproj tests/EmailWorker.Tests/
 
 # Restore packages
-RUN dotnet restore tests/EmailWorker.Tests
+RUN dotnet restore
 
 # Copy all source code
 COPY . .
