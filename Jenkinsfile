@@ -147,6 +147,7 @@ stage('Create Version Tag') {
                         '''
                     }
                     
+                    
                     echo "Successfully pushed ${env.WORKER_TAG} to ECR"
                 }
             }
